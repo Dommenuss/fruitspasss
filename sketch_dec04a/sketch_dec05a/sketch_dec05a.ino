@@ -1,9 +1,7 @@
-
 //Chaine de caractères pour recevoir les données.
 String bluetoothMessage = "" ;
 int LED_PIN = 13 ;
-int BUTTON_PIN = 7 ; 
-int BUTTON_PIN2 = 8 ; 
+int BUTTON_PIN = 5 ; 
 boolean boutonPresse = false ; 
 boolean ledOn = false ; 
 
@@ -14,13 +12,11 @@ void setup() {
   //Initialise the builtin led 
   pinMode( LED_PIN, OUTPUT ) ;
   pinMode( BUTTON_PIN, INPUT ) ;
-  pinMode( BUTTON_PIN2, INPUT ); 
+
 }
 
 void loop() {
-
-
-  //Bluetoothzeug
+  
   //While there is data to read
   while( Serial.available() ) {
     //Stability fix : Small delay between reads 
@@ -44,7 +40,7 @@ void loop() {
   }
 
   //Si le bouton est pressé 
-  if( digitalRead( BUTTON_PIN ) == HIGH || digitalRead ( BUTTON_PIN2 ) ) {
+  if( digitalRead( BUTTON_PIN ) == HIGH ) {
     //mais qu'il n'était pas pressé à l'execution précédente de loop()
     if ( !boutonPresse ) {    
       if( ledOn ) {
@@ -63,4 +59,5 @@ void loop() {
     //Le bouton a été relaché 
     boutonPresse = false ; 
   }
+
 }
