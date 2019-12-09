@@ -4,7 +4,8 @@
 #include <LiquidCrystal_I2C.h>
 
 
-//Chaine de caractères pour recevoir les données.
+//General
+int winByPoints = 5;
 String bluetoothMessage = "" ;
 int LED_PIN = 13 ;
 int BUTTON_PIN = 7 ; 
@@ -13,6 +14,9 @@ boolean boutonPresse = false ;
 boolean ledOn = false ; 
 unsigned long time_now = 0;
 unsigned long inactiveTime = 0;
+int player1count = 0;
+int player2count = 0;
+String currentWinner;
 
 
 
@@ -37,11 +41,10 @@ String kiwi = "Kiwi";
 String bonus = "Ponus";
 String start = "Ready?";
 String pressButton = "Press a Button!";
-String ueff = "Üff!";
 String player1wins = "Player 1 wins!";
 String player2wins = "Player 2 wins!";
-int player1count = 0;
-int player2count = 0;
+String fruitPhone;
+
 int currentFruit;
 String currentFruitName;
 
@@ -58,6 +61,7 @@ int ponusOffset = 5;
 
 //Connection
 boolean phoneStartsGame = false;
+boolean correctPress;
 
 
 //LCD address = 0x27, 16 Chars, 2 Line Display
@@ -124,21 +128,23 @@ void loop() {
     if( bluetoothMessage == "OK" ) {
       phoneStartsGame = true;
     }
-    if( bluetoothMessage == "E" ) {
-       digitalWrite( LED_PIN, LOW ) ;
-    }   
 
     //RECEIVES BANANE MESSAGE
     if( bluetoothMessage == "banane" ) {
       if(currentFruit == 0){
+        correctPress = true;
         sendWinningPlayer();
       }else{
-        sendWrongPlayer();
+        correctPress = false;
+        sendWinningPlayer();
       }
+      fruitPhone = "banane";
+      setDisplayToCorrectPlayer();
       updatePlayerCount();
-      setDisplayToCorrectPlayer("P1");
-      delay(5000);
-      setDisplayToDefault();
+      resetVariables();
+      sendA();
+      //setDisplayToDefault();
+      delay(300);
       //THIS COULD BE A POSSIBLE ERROR SOURCE; THUS THE MESSAGE GETS LOST IN THESE 5 SECONS
       
     }
@@ -147,49 +153,73 @@ void loop() {
     //RECEIVES MELONE MESSAGE
     if( bluetoothMessage == "melone" ) {
       if(currentFruit == 1){
+        correctPress = true;
         sendWinningPlayer();
       }else{
-        sendWrongPlayer();
+        correctPress = false;
+        sendWinningPlayer();
       }
+      fruitPhone = "melone";
+      setDisplayToCorrectPlayer();
       updatePlayerCount();
-      setDisplayToDefault();
-      delay(5000);
+      resetVariables();
+      sendA();
+      //setDisplayToDefault();
+      delay(300);
     }
 
     //RECEIVES APFEL MESSAGE
     if( bluetoothMessage == "apfel" ) {
        if(currentFruit == 2){
+        correctPress = true;
         sendWinningPlayer();
       }else{
-        sendWrongPlayer();
+        correctPress = false;
+        sendWinningPlayer();
       }
+      fruitPhone = "apfel";
+      setDisplayToCorrectPlayer();
       updatePlayerCount();
-      setDisplayToDefault();
-      delay(5000);
+      resetVariables();
+      sendA();
+      //setDisplayToDefault();
+      delay(300);
     }
   
     //RECEIVES MANGO MESSAGE
     if( bluetoothMessage == "mango" ) {
        if(currentFruit == 3){
+       correctPress = true;
         sendWinningPlayer();
       }else{
-        sendWrongPlayer();
+        correctPress = false;
+        sendWinningPlayer();
       }
+      fruitPhone = "mango";
+      setDisplayToCorrectPlayer();
       updatePlayerCount();
-      setDisplayToDefault();
-      delay(5000);
+      resetVariables();
+      sendA();
+      //setDisplayToDefault();
+      delay(300);
     }
 
     //RECEIVES KIWI MESSAGE
     if( bluetoothMessage == "kiwi" ) {
        if(currentFruit == 3){
+        correctPress = true;
         sendWinningPlayer();
-      }else{
-        sendWrongPlayer();
-      }
+       }else{
+        correctPress = false;
+        sendWinningPlayer();
+       }
+      fruitPhone = "kiwi";
+      setDisplayToCorrectPlayer();
       updatePlayerCount();
-      setDisplayToDefault();
-      delay(5000);
+      resetVariables();
+      sendA();
+      //setDisplayToDefault();
+      delay(300);
     }
 
 
@@ -202,7 +232,7 @@ void loop() {
   if(phoneStartsGame){
         //starts countdown for game
         firstButtonPressed = true;
-      }
+  }
 
 
 
@@ -212,41 +242,39 @@ void loop() {
 
   //Handles onclick button for player 1
   
-  if( digitalRead( BUTTON_PIN ) == HIGH) {
+  if( digitalRead( BUTTON_PIN ) == HIGH && !playerTwoButtonPressed) {
     playerOneButtonPressed = true;
-    
-    //THIS SENDS A MESSAGE TO THE PHONE TO START THE GAME, A FOR ANFANGEN
-    if(!boutonPresse && !firstButtonPressed){
-      //When a button is pressed for the first time, to start the countdown
-      Serial.print("A");
-    }
 
     //THIS CHECKS IF BUTTON WAS PRESSED IN THE RIGHT TIME AND ASKS PHONE FOR ITS FRUIT IMAGE
     if (!boutonPresse && firstButtonPressed) {    
         //SEND QUESTION WHAT FRUIT IS SHWON ON PHONE BY SENDING F FOR FRUCHT?
-        if(currentFruit == 5){
-          updatePlayerCount();
-        }else{
-          
+        if(currentFruit != 5){
           Serial.print("F"); 
           currentFruitName = fruitArray[currentFruit]; 
+        }else{
+          Serial.print("O");
+          correctPress = true;
+          setDisplayToCorrectPlayer();
+          updatePlayerCount();
+          resetVariables();
+          sendA();
+          //setDisplayToDefault();
+          delay(200);
          
         }
-
-
-        
-        //TODO: receive fruit name from phone
-        //TODO: check if correct fruits, then change player1count accordingly
-         //Adjust PlayerCount
-      
-      
-      }
+    }
+    //THIS SENDS A MESSAGE TO THE PHONE TO START THE GAME, A FOR ANFANGEN
+    if(!boutonPresse && !firstButtonPressed){
+      //When a button is pressed for the first time, to start the countdown
+      Serial.print("A");
+     
+    }
       //On note qu'on vient de traiter le fait que le bouton a été pressé ( front montant ) 
       boutonPresse = true ;
       inactiveTime = millis();
       waiting = false;
       //Delay of 500 eliminates button bouncing
-      delay(500) ;
+      delay(400) ;
     
   } else {
     //Le bouton a été relaché 
@@ -262,37 +290,41 @@ void loop() {
 
   //Handles onclick button for player 2
   
- if( digitalRead( BUTTON_PIN2 ) == HIGH) {
+ if( digitalRead( BUTTON_PIN2 ) == HIGH && !playerOneButtonPressed) {
     playerTwoButtonPressed = true;
-    
+
+      //THIS CHECKS IF BUTTON WAS PRESSED IN THE RIGHT TIME AND ASKS PHONE FOR ITS FRUIT IMAGE
+    if (!boutonPresse && firstButtonPressed) {    
+        //SEND QUESTION WHAT FRUIT IS SHWON ON PHONE BY SENDING F FOR FRUCHT?
+        if(currentFruit != 5){
+          Serial.print("F"); 
+          currentFruitName = fruitArray[currentFruit]; 
+        }else{
+          Serial.print("T");
+          correctPress = true;
+          setDisplayToCorrectPlayer();
+          updatePlayerCount();
+          resetVariables();
+          sendA();
+          //setDisplayToDefault();
+          delay(200);
+         
+        }
+    }
+      
     //THIS SENDS A MESSAGE TO THE PHONE TO START THE GAME, A FOR ANFANGEN
     if(!boutonPresse && !firstButtonPressed){
-      Serial.print("A");
       //When a button is pressed for the first time, to start the countdown
-     
+      Serial.print("A");
+       
     }
-
-    //THIS CHECKS IF BUTTON WAS PRESSED IN THE RIGHT TIME AND ASKS PHONE FOR ITS FRUIT IMAGE
-    if ( !boutonPresse && firstButtonPressed ) {    
-        //SEND QUESTION WHAT FRUIT IS SHWON ON PHONE BY SENDING F FOR FRUCHT?
-        Serial.print("F"); 
-        //TODO: receive fruit name from phone
-        //TODO: check if correct fruits, then change player1count accordingly
-         //Adjust PlayerCount
-        if(firstButtonPressed && !waiting){
-          if(player2count >= 10){
-            Serial.print("W2");
-          }else{
-            player2count = player2count + 1;
-          }
-      }
-      }
+      
       //On note qu'on vient de traiter le fait que le bouton a été pressé ( front montant ) 
       boutonPresse = true ;
       inactiveTime = millis();
       waiting = false;
       //Delay of 500 eliminates button bouncing
-      delay(500) ;
+      delay(400) ;
     
   } else {
     //Le bouton a été relaché 
@@ -334,6 +366,8 @@ void loop() {
       lcd.clear();
       lcd.setCursor(2,0);
       lcd.print("Starting in 1");
+      playerOneButtonPressed = false;
+      playerTwoButtonPressed = false;
       gameAlreadyStarted = true;
       delay(1000);
       //Sends phone an "S" for Start
@@ -351,8 +385,8 @@ void loop() {
   //after 40 seconds of inactivity the display blocks and shows a message
   //This code is already finished and should not be changed
   
-  if(millis() > time_now + 2000){
-    if(millis() > inactiveTime + 40000 && !waiting){
+  if(millis() > time_now + 2000 && phoneStartsGame && !playerOneButtonPressed && !playerTwoButtonPressed){
+    if(millis() > inactiveTime + 60000 && !waiting){
     waiting = true;
     lcd.clear();
     lcd.setCursor(0,0);
@@ -369,7 +403,7 @@ void loop() {
      lcd.print("P1: "+String(player1count));
      lcd.setCursor(11,1);
      lcd.print("P2: "+String(player2count));
-  }
+    }
   }
   }
 
@@ -380,18 +414,58 @@ void loop() {
 
 
 //Functions
-void setDisplayToCorrectPlayer(String player){
+void setDisplayToCorrectPlayer(){
+      
+      if(correctPress && playerOneButtonPressed){
+        currentWinner = "P1";
+      }else if(correctPress && playerTwoButtonPressed){
+        currentWinner = "P2";
+      }else if(!correctPress && playerOneButtonPressed){
+        currentWinner = "P2";
+      }else if(!correctPress && playerTwoButtonPressed){
+        currentWinner = "P1";
+      }else{
+        //Game Error
+        Serial.print("E");
+      }
+      String debug;
+      if(correctPress == 0){
+         debug = "false";
+      } else {
+        debug = "right";
+      }
+    
         lcd.clear();
         lcd.setCursor(0,0);
-        lcd.print(player);
-        lcd.setCursor(1,1);
-        lcd.print("was correct!");
+        lcd.print("Point for " +currentWinner+"!");
+        lcd.setCursor(0,1);
+        lcd.print(currentFruitName + "|" + fruitPhone + "|" + debug);
+        delay(3000);
+}
+
+
+void resetVariables(){
+        phoneStartsGame = false;
+        firstButtonPressed = true;
+        gameFinished = false;
+        playerOneButtonPressed = false;
+        playerTwoButtonPressed = false;
+        gameAlreadyStarted = false;
+        buttonInGamePressed = false;
+        newFruit = true;
+        on = false;
+        waiting = false;
+        
+}
+
+void sendA(){
+
+  Serial.print("A");
 }
 
 
 void setDisplayToDefault(){
-        phoneStartsGame = false;
-        firstButtonPressed = false;
+       
         lcd.clear();
         lcd.setCursor(5,0);
         lcd.print(start);
@@ -402,54 +476,73 @@ void setDisplayToDefault(){
 
 void sendWinningPlayer(){
   //TODO: send correct player: O = ONE, T = TWO
-  Serial.print("O");
+  if(correctPress && playerOneButtonPressed){
+    Serial.print("O");
+  }else if(correctPress && playerTwoButtonPressed){
+    Serial.print("T");
+  }else if(!correctPress && playerOneButtonPressed){
+    Serial.print("T");
+  }else if(!correctPress && playerTwoButtonPressed){
+    Serial.print("O");
+  }else{
+    //Game Error
+    Serial.print("E");
+  }
+  
 }
 
-void sendWrongPlayer(){
-  //TODO: send correct player
-  Serial.print("P1F");
+void resetCounter(){
+  player1count = 0;
+  player2count = 0;
 }
+
 
 
 void updatePlayerCount(){
-  if(playerOneButtonPressed){
-    player1count = player1count + 1;
+  if(correctPress && playerOneButtonPressed){
+        player1count = player1count + 1;
+  }else if(correctPress && playerTwoButtonPressed){
+        player2count = player2count + 1;
+  }else if(!correctPress && playerOneButtonPressed){
+        player2count = player2count + 1;
+  }else if(!correctPress && playerTwoButtonPressed){
+        player1count = player1count + 1;
   }
-  if(playerTwoButtonPressed){
-    player2count = player2count + 1;
-  }
-  if(player1count >= 10){
+  if(player1count >= winByPoints){
     if(!waiting){
-     Serial.print("W1");
+     Serial.print("Y");
+     resetVariables();
+     
+     resetCounter();
      lcd.clear();
-     lcd.setCursor(5,0);
-     lcd.print("player 1");
+     lcd.setCursor(0,0);
+     lcd.print("Player one wins!");
      lcd.setCursor(1,1);
-     lcd.print("wins!");
+     lcd.print("... next round?");
+     firstButtonPressed = false;
      delay(10000);
-     lcd.clear();
-     lcd.setCursor(5,0);
-     lcd.print(start);
-     lcd.setCursor(1,1);
-     lcd.print(pressButton);
+     
+     setDisplayToDefault();
+     
     } 
     //TODO, skip to winning screen
   }
-  if(player2count >= 10){
+  if(player2count >= winByPoints){
     if(!waiting){
-     Serial.print("W2");
+     Serial.print("Z");
+     resetVariables();
+     
+     resetCounter();
      lcd.clear();
      lcd.setCursor(0,0);
-     lcd.print("player 2");
-     lcd.setCursor(0,1);
-     lcd.print("wins");
+     lcd.print("Payer two wins!");
+     lcd.setCursor(1,1);
+     lcd.print("... next round?");
+     firstButtonPressed = false;
      delay(10000);
-     lcd.clear();
-     lcd.setCursor(0,0);
-     lcd.print(start);
-     lcd.setCursor(0,1);
-     lcd.print(pressButton);
-    //TODO, skip to winning screen
+     
+     setDisplayToDefault();
+     
     }
   }
 }
