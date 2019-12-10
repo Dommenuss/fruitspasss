@@ -17,6 +17,7 @@ unsigned long inactiveTime = 0;
 int player1count = 0;
 int player2count = 0;
 String currentWinner;
+boolean restartLoop = false;
 
 
 
@@ -228,6 +229,11 @@ void loop() {
     bluetoothMessage = "" ;
   }
 
+  if(restartLoop){
+    restartLoop = false;
+    return;
+  }
+
  
   if(phoneStartsGame){
         //starts countdown for game
@@ -334,7 +340,11 @@ void loop() {
 
 
 
-
+  if(restartLoop){
+    restartLoop = false;
+    return;
+  }
+  
 
 
   
@@ -458,6 +468,26 @@ void resetVariables(){
         
 }
 
+void resetVariablesComplete(){
+      firstButtonPressed = false;
+      gameFinished = false;
+      playerOneButtonPressed = false;
+      playerTwoButtonPressed = false;
+      gameAlreadyStarted = false;
+      buttonInGamePressed = false;
+      newFruit = true;
+      on = false;
+      waiting = false;
+      time_now = 0;
+      inactiveTime = 0;
+      player1count = 0;
+      player2count = 0;
+      phoneStartsGame = false;
+      restartLoop = true;
+      
+
+}
+
 void sendA(){
 
   Serial.print("A");
@@ -511,15 +541,13 @@ void updatePlayerCount(){
   if(player1count >= winByPoints){
     if(!waiting){
      Serial.print("Y");
-     resetVariables();
-     
-     resetCounter();
+     resetVariablesComplete();
      lcd.clear();
      lcd.setCursor(0,0);
      lcd.print("Player one wins!");
      lcd.setCursor(1,1);
      lcd.print("... next round?");
-     firstButtonPressed = false;
+    
      delay(10000);
      
      setDisplayToDefault();
@@ -530,15 +558,15 @@ void updatePlayerCount(){
   if(player2count >= winByPoints){
     if(!waiting){
      Serial.print("Z");
-     resetVariables();
+     resetVariablesComplete();
      
-     resetCounter();
+     
      lcd.clear();
      lcd.setCursor(0,0);
      lcd.print("Payer two wins!");
      lcd.setCursor(1,1);
      lcd.print("... next round?");
-     firstButtonPressed = false;
+     
      delay(10000);
      
      setDisplayToDefault();
